@@ -36,3 +36,9 @@ services:
     ports:
       - "6006:6006"  # Expose port 6006 for the UI and OTLP HTTP collector
       - "4317:4317"  # Expose port 4317 for OTLP gRPC collector
+
+  # Add Redis
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
