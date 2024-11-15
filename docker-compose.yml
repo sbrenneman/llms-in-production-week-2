@@ -1,27 +1,38 @@
 services:
+  # Define the Streamlit application service
   streamlit-app:
     build:
-      context: ./
-      dockerfile: Dockerfile
+      context: ./  # Set the build context to the current directory
+      dockerfile: Dockerfile  # Specify the Dockerfile to use for building the image
       args:
-        # Define required args for the container
+        # Pass build-time arguments to the Dockerfile, used for configuring GuardRails and OpenAI
         GUARDRAILS_TOKEN: ${GUARDRAILS_TOKEN}
         OPENAI_API_KEY: ${OPENAI_API_KEY}
     environment:
+      # Set environment variables to be used by the running container
+      - COLLECTOR_ENDPOINT=http://phoenix:6006/v1/traces  # Endpoint for tracing data, used by Phoenix
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GUARDRAILS_TOKEN=${GUARDRAILS_TOKEN}
-    # Map port 8080 of the container to port 8080 on the host
-    # This allows the Streamlit app to be accessed from the host machine
     ports:
+      # Map port 8080 of the container to port 8080 on the host machine
       - "8080:8080"
-    # Mount volumes for live code updating
-    # This maps the src directory and .streamlit configuration
-    # from your host to the container
     volumes:
-      - ./src:/app/src
-      - ./.streamlit:/app/.streamlit
+      # Mount the source code and configuration into the container
+      - ./src:/app/src  # Mount the local `src` directory to `/app/src` in the container
+      - ./.streamlit:/app/.streamlit  # Mount the Streamlit configuration directory
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://0.0.0.0:8080/healthz"]
-      interval: 3s
-      timeout: 1s
-      retries: 3
+      # Define a health check to verify that the application is running
+      test: ["CMD", "wget", "--spider", "http://0.0.0.0:8080/healthz"]  # Use wget to check if the health endpoint is available
+      interval: 3s  # Run the health check every 3 seconds
+      timeout: 1s  # Timeout for the health check command is 1 second
+      retries: 3  # Retry the health check up to 3 times before marking the container as unhealthy
+    depends_on:
+      # Ensure that the Phoenix service is started before the Streamlit app
+      - phoenix
+
+  # Define the Phoenix service for tracing and monitoring
+  phoenix:
+    image: arizephoenix/phoenix:latest  # Use the latest version of the Phoenix image
+    ports:
+      - "6006:6006"  # Expose port 6006 for the UI and OTLP HTTP collector
+      - "4317:4317"  # Expose port 4317 for OTLP gRPC collector

@@ -1,6 +1,6 @@
 PROMPT = """
 You will be given a prompt which you will have to translate to valid SQL.
-Here is the request: {query}
+Here is the request: ${query}
 
 Approach this task step by step:
 1. Identify the names of the tables and columns from which would general be used in a DB that could answer the query.
